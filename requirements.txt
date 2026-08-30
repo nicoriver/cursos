@@ -1,0 +1,6 @@
+django
+pymysql
+cryptography
+python-dotenv
+pandas
+openpyxl

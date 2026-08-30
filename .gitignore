@@ -1,0 +1,24 @@
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Sensitive local settings
+.env
+
+# Media uploads (receipts)
+media/
+media/comprobantes/
+
+# Database files
+db.sqlite3
+
+# IDEs settings
+.vscode/
+.idea/

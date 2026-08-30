@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificación Syric - Gestión Académica</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts Outfit & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #2c3e50 !important;
+            font-size: 1.5rem;
+        }
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+        }
+        .nav-link.active {
+            font-weight: 600;
+            color: #3f51b5 !important;
+        }
+        .btn-primary {
+            background-color: #3f51b5;
+            border-color: #3f51b5;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: #303f9f;
+            border-color: #303f9f;
+        }
+        .btn-success {
+            border-radius: 8px;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+        }
+        .text-accent {
+            color: #3f51b5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 mb-5">
+        <div class="container">
+            <span class="navbar-brand"><span class="text-accent">Antigravity</span> Gestión</span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    {% if user.is_superuser or user.is_staff %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'importar_syric' %}">Importar Syric</a>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link" href="{% url 'lista_inscripciones' %}">Gestión de Cobranzas / Moodle</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link" href="{% url 'portal_docente' %}">Portal Docente</a>
+                    </li>
+                    {% if user.is_superuser or user.is_staff %}
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link active" href="{% url 'reporte_syric' %}">Certificación Syric</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <span class="text-muted me-3">Usuario: <strong>{{ user.username }}</strong></span>
+                        <a href="/admin/" class="btn btn-outline-secondary btn-sm me-2">Panel Admin</a>
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Iniciar Sesión</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container pb-5">
+        
+        <!-- Counters -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="card stat-card p-3 border-start border-primary border-4">
+                    <div class="text-muted fw-bold small text-uppercase">Total Aprobados</div>
+                    <div class="fs-2 fw-bold text-dark mt-1">{{ total_aprobados }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="card stat-card p-3 border-start border-warning border-4">
+                    <div class="text-warning fw-bold small text-uppercase">Syric Pendiente</div>
+                    <div class="fs-2 fw-bold text-warning mt-1">{{ pendientes_syric }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="card stat-card p-3 border-start border-info border-4">
+                    <div class="text-info fw-bold small text-uppercase">Syric Gestionado</div>
+                    <div class="fs-2 fw-bold text-info mt-1">{{ gestionados_syric }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="card stat-card p-3 border-start border-success border-4">
+                    <div class="text-success fw-bold small text-uppercase">Syric Emitido</div>
+                    <div class="fs-2 fw-bold text-success mt-1">{{ emitidos_syric }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 rounded-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Filter Card -->
+        <div class="card main-card p-4 mb-4">
+            <form method="get" action="." class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label for="curso" class="form-label fw-semibold">Curso</label>
+                    <select class="form-select" name="curso" id="curso">
+                        <option value="">-- Todos los Cursos --</option>
+                        {% for curso in cursos %}
+                            <option value="{{ curso.id }}" {% if curso_id == curso.id|stringformat:"s" %}selected{% endif %}>{{ curso.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label for="certificado" class="form-label fw-semibold">Estado de Certificación</label>
+                    <select class="form-select" name="certificado" id="certificado">
+                        <option value="">-- Todos --</option>
+                        <option value="PENDIENTE" {% if certificado_estado == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                        <option value="GESTIONADO" {% if certificado_estado == 'GESTIONADO' %}selected{% endif %}>Gestionado (Exportado)</option>
+                        <option value="EMITIDO" {% if certificado_estado == 'EMITIDO' %}selected{% endif %}>Emitido (Final)</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <h3 class="mb-0">Cursantes Aprobados</h3>
+            <div>
+                {% if curso_id and total_aprobados > 0 %}
+                    <a href="{% url 'descargar_aprobados_syric' curso_id %}" class="btn btn-success btn-lg px-4">
+                        Descargar Aprobados Excel (.xlsx)
+                    </a>
+                {% else %}
+                    <button class="btn btn-success btn-lg px-4" disabled title="Debe seleccionar un curso que posea estudiantes aprobados para habilitar esta descarga.">
+                        Descargar Aprobados Excel (.xlsx)
+                    </button>
+                    {% if not curso_id %}
+                        <small class="d-block text-muted mt-1 text-end">*Selecciona un curso arriba para descargar.</small>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card main-card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4">Cursante</th>
+                            <th>Curso</th>
+                            <th>Preinscripción</th>
+                            <th>Nota Final</th>
+                            <th>Estado Académico</th>
+                            <th class="pe-4">Certificación Syric</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for insc in inscripciones %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">{{ insc.cursante.apellido }}, {{ insc.cursante.nombre }}</div>
+                                    <small class="text-muted">DNI: {{ insc.cursante.dni }}</small>
+                                </td>
+                                <td>{{ insc.curso.nombre }}</td>
+                                <td class="font-monospace text-muted">{{ insc.id_preinscripcion_syric|default:"-" }}</td>
+                                <td class="fw-bold">{{ insc.nota_final|default:"-" }}</td>
+                                <td>
+                                    {% if insc.estado_academico == 'APROBADO' %}
+                                        <span class="badge bg-success">APROBADO</span>
+                                    {% elif insc.estado_academico == 'DESAPROBADO' %}
+                                        <span class="badge bg-danger">DESAPROBADO</span>
+                                    {% elif insc.estado_academico == 'LIBRE' %}
+                                        <span class="badge bg-secondary">LIBRE</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">CURSANDO</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4">
+                                    {% if insc.certificado_syric == 'EMITIDO' %}
+                                        <span class="badge bg-success">EMITIDO</span>
+                                    {% elif insc.certificado_syric == 'GESTIONADO' %}
+                                        <span class="badge bg-primary">GESTIONADO (EXPORTADO)</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">PENDIENTE</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    No se encontraron registros de cursantes para certificar.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

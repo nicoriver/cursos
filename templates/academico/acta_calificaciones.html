@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acta de Calificaciones - Gestión Académica</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts Outfit & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #2c3e50 !important;
+            font-size: 1.5rem;
+        }
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+        }
+        .nav-link.active {
+            font-weight: 600;
+            color: #3f51b5 !important;
+        }
+        .btn-primary {
+            background-color: #3f51b5;
+            border-color: #3f51b5;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: #303f9f;
+            border-color: #303f9f;
+        }
+        .text-accent {
+            color: #3f51b5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 mb-5">
+        <div class="container">
+            <span class="navbar-brand"><span class="text-accent">Antigravity</span> Gestión</span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    {% if user.is_superuser or user.is_staff %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'importar_syric' %}">Importar Syric</a>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link" href="{% url 'lista_inscripciones' %}">Gestión de Cobranzas / Moodle</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link active" href="{% url 'portal_docente' %}">Portal Docente</a>
+                    </li>
+                    {% if user.is_superuser or user.is_staff %}
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link" href="{% url 'reporte_syric' %}">Certificación Syric</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <span class="text-muted me-3">Usuario: <strong>{{ user.username }}</strong></span>
+                        <a href="/admin/" class="btn btn-outline-secondary btn-sm me-2">Panel Admin</a>
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Iniciar Sesión</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container pb-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <a href="{% url 'portal_docente' %}" class="text-accent text-decoration-none small fw-bold">← Volver al Portal Docente</a>
+                <h1 class="text-dark mt-2 mb-0">Acta de Calificaciones</h1>
+                <p class="text-muted mb-0">Curso: <strong>{{ curso.nombre }}</strong></p>
+            </div>
+            <div>
+                <span class="badge bg-secondary p-2.5 font-monospace">Código Syric: {{ curso.id_syric|default:"N/A" }}</span>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 rounded-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Batch Grading Form -->
+        <div class="card main-card overflow-hidden">
+            <form method="post" action=".">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0 align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-4">Cursante</th>
+                                <th>DNI</th>
+                                <th>Estado de Pago</th>
+                                <th>Estado Académico</th>
+                                <th>Nota Final (Ej: 9.50)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for insc in inscripciones %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">
+                                        {{ insc.cursante.apellido }}, {{ insc.cursante.nombre }}
+                                    </td>
+                                    <td class="font-monospace text-muted">
+                                        {{ insc.cursante.dni }}
+                                    </td>
+                                    <td>
+                                        {% if insc.estado_pago == 'PAGADO' %}
+                                            <span class="badge bg-success">PAGADO</span>
+                                        {% elif insc.estado_pago == 'BECADO_EXENTO' %}
+                                            <span class="badge bg-info">BECADO</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">PENDIENTE</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm" name="estado_academico_{{ insc.id }}" required style="max-width: 180px;">
+                                            <option value="CURSANDO" {% if insc.estado_academico == 'CURSANDO' %}selected{% endif %}>Cursando</option>
+                                            <option value="APROBADO" {% if insc.estado_academico == 'APROBADO' %}selected{% endif %}>Aprobado</option>
+                                            <option value="DESAPROBADO" {% if insc.estado_academico == 'DESAPROBADO' %}selected{% endif %}>Desaprobado</option>
+                                            <option value="LIBRE" {% if insc.estado_academico == 'LIBRE' %}selected{% endif %}>Libre</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm text-center font-monospace" 
+                                               name="nota_final_{{ insc.id }}" 
+                                               value="{{ insc.nota_final|default:'' }}" 
+                                               placeholder="Sin Nota"
+                                               style="max-width: 100px;">
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        No hay alumnos matriculados (estado Moodle: MATRICULADO) en este curso para calificar.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if inscripciones.exists %}
+                    <div class="card-footer bg-white text-end p-4 border-top">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">Guardar Acta Completa</button>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
