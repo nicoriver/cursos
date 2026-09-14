@@ -30,7 +30,7 @@ def generate_moodle_csv_response(curso_id):
         writer = csv.writer(output, delimiter=',')
         
         # Escribir cabeceras
-        writer.writerow(['username', 'password', 'firstname', 'lastname', 'email', 'cohort1'])
+        writer.writerow(['username', 'lastname', 'firstname', 'email', 'cohort1', 'password'])
         
         updated_ids = []
         for insc in inscripciones:
@@ -57,7 +57,7 @@ def generate_moodle_csv_response(curso_id):
             cohort1 = curso.id_cohorte_moodle or ""
             
             # Escribir fila
-            writer.writerow([username, password, firstname, lastname, email, cohort1])
+            writer.writerow([username, lastname, firstname, email, cohort1, password])
             updated_ids.append(insc.id)
             
         # Actualizar estado_moodle a 'MATRICULADO'
