@@ -61,9 +61,12 @@ class TituloCursante(models.Model):
 
 
 class Inscripcion(models.Model):
+    ESTADOS_PAGO_MATRICULABLES = ['PAGADO', 'PARCIALMENTE_COBRADO', 'BECADO_EXENTO']
+
     ESTADO_PAGO_CHOICES = [
         ('PENDIENTE', 'Pendiente'),
         ('PAGADO', 'Pagado'),
+        ('PARCIALMENTE_COBRADO', 'Parcialmente Cobrado'),
         ('BECADO_EXENTO', 'Becado / Exento'),
     ]
 

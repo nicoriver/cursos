@@ -145,6 +145,8 @@
                                     <td>
                                         {% if insc.estado_pago == 'PAGADO' %}
                                             <span class="badge bg-success">PAGADO</span>
+                                        {% elif insc.estado_pago == 'PARCIALMENTE_COBRADO' %}
+                                            <span class="badge bg-warning text-dark">PARCIALMENTE COBRADO</span>
                                         {% elif insc.estado_pago == 'BECADO_EXENTO' %}
                                             <span class="badge bg-info">BECADO</span>
                                         {% else %}

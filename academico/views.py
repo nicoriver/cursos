@@ -82,12 +82,12 @@ def lista_inscripciones(request):
         base_counts = base_counts.filter(curso_id=curso_id)
 
     total_count = base_counts.count()
-    pagados_count = base_counts.filter(estado_pago__in=['PAGADO', 'BECADO_EXENTO']).count()
+    pagados_count = base_counts.filter(estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES).count()
     pendientes_count = base_counts.filter(estado_pago='PENDIENTE').count()
     
-    # Ready for moodle: PAID or BECADO, and NOT matriculados yet
+    # Ready for moodle: paid, partially collected or becado, and not matriculated yet.
     listos_moodle_count = base_counts.filter(
-        estado_pago__in=['PAGADO', 'BECADO_EXENTO'],
+        estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES,
         estado_moodle='NO_MATRICULADO'
     ).count()
 
@@ -117,7 +117,7 @@ def marcar_pago(request, inscripcion_id):
         nuevo_estado = request.POST.get('estado_pago', 'PAGADO')
         inscripcion.estado_pago = nuevo_estado
         
-        if nuevo_estado == 'PAGADO':
+        if nuevo_estado in Inscripcion.ESTADOS_PAGO_MATRICULABLES:
             inscripcion.fecha_pago = timezone.now().date()
         else:
             inscripcion.fecha_pago = None
@@ -419,7 +419,7 @@ def dashboard_principal(request):
     total_cursantes = Cursante.objects.count()
     
     # Payments counts
-    total_pagados = Inscripcion.objects.filter(estado_pago__in=['PAGADO', 'BECADO_EXENTO']).count()
+    total_pagados = Inscripcion.objects.filter(estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES).count()
     total_pendientes = Inscripcion.objects.filter(estado_pago='PENDIENTE').count()
     
     # Moodle counts
@@ -437,7 +437,7 @@ def dashboard_principal(request):
         inscs = Inscripcion.objects.filter(curso=curso)
         total_insc = inscs.count()
         
-        pagados = inscs.filter(estado_pago__in=['PAGADO', 'BECADO_EXENTO']).count()
+        pagados = inscs.filter(estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES).count()
         matriculados = inscs.filter(estado_moodle='MATRICULADO').count()
         aprobados = inscs.filter(estado_academico='APROBADO').count()
         desaprobados = inscs.filter(estado_academico='DESAPROBADO').count()
@@ -495,4 +495,3 @@ def editar_cursante(request, cursante_id):
     if referer:
         return redirect(referer)
     return redirect('lista_inscripciones')
-

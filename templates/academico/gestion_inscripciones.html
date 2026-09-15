@@ -65,6 +65,7 @@
         }
         .badge-pendiente { background-color: #f1c40f; color: #fff; }
         .badge-pagado { background-color: #2ecc71; color: #fff; }
+        .badge-parcial { background-color: #e67e22; color: #fff; }
         .badge-becado { background-color: #3498db; color: #fff; }
         .badge-no-matriculado { background-color: #95a5a6; color: #fff; }
         .badge-matriculado { background-color: #27ae60; color: #fff; }
@@ -131,7 +132,7 @@
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="card stat-card p-3 border-start border-success border-4">
-                    <div class="text-success fw-bold small text-uppercase">Pagados / Becados</div>
+                    <div class="text-success fw-bold small text-uppercase">Cobrados / Matriculables</div>
                     <div class="fs-2 fw-bold text-success mt-1">{{ pagados_count }}</div>
                 </div>
             </div>
@@ -176,6 +177,7 @@
                         <option value="">-- Todos --</option>
                         <option value="PENDIENTE" {% if estado_pago == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
                         <option value="PAGADO" {% if estado_pago == 'PAGADO' %}selected{% endif %}>Pagado</option>
+                        <option value="PARCIALMENTE_COBRADO" {% if estado_pago == 'PARCIALMENTE_COBRADO' %}selected{% endif %}>Parcialmente Cobrado</option>
                         <option value="BECADO_EXENTO" {% if estado_pago == 'BECADO_EXENTO' %}selected{% endif %}>Becado / Exento</option>
                     </select>
                 </div>
@@ -256,6 +258,11 @@
                                         {% endif %}
                                     {% elif insc.estado_pago == 'BECADO_EXENTO' %}
                                         <span class="badge badge-becado">BECADO / EXENTO</span>
+                                    {% elif insc.estado_pago == 'PARCIALMENTE_COBRADO' %}
+                                        <span class="badge badge-parcial">PARCIALMENTE COBRADO</span>
+                                        {% if insc.comprobante_pago %}
+                                            <a href="{{ insc.comprobante_pago.url }}" target="_blank" class="d-block small text-accent mt-1">Ver Comprobante</a>
+                                        {% endif %}
                                     {% else %}
                                         <span class="badge badge-pendiente">PENDIENTE</span>
                                     {% endif %}
@@ -323,6 +330,7 @@
                             <select class="form-select" name="estado_pago" id="id_estado_pago" required>
                                 <option value="PENDIENTE">Pendiente</option>
                                 <option value="PAGADO">Pagado</option>
+                                <option value="PARCIALMENTE_COBRADO">Parcialmente Cobrado</option>
                                 <option value="BECADO_EXENTO">Becado / Exento</option>
                             </select>
                         </div>
@@ -508,6 +516,7 @@
                             pagoSpan.textContent = data.estado_pago_display;
                             pagoSpan.className = "badge";
                             if (data.estado_pago === 'PAGADO') pagoSpan.classList.add('badge-pagado');
+                            else if (data.estado_pago === 'PARCIALMENTE_COBRADO') pagoSpan.classList.add('badge-parcial');
                             else if (data.estado_pago === 'BECADO_EXENTO') pagoSpan.classList.add('badge-becado');
                             else pagoSpan.classList.add('badge-pendiente');
 

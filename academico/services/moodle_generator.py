@@ -9,7 +9,7 @@ from academico.models import Curso, Inscripcion
 def generate_moodle_csv_response(curso_id):
     """
     Genera un archivo CSV compatible con Moodle para matricular cursantes.
-    Filtra por curso, estado_pago in ['PAGADO', 'BECADO_EXENTO'] y estado_moodle = 'NO_MATRICULADO'.
+    Filtra por curso, estado_pago matriculable y estado_moodle = 'NO_MATRICULADO'.
     Una vez generado, actualiza atomicamente el estado de moodle a 'MATRICULADO'.
     """
     curso = get_object_or_404(Curso, id=curso_id)
@@ -18,7 +18,7 @@ def generate_moodle_csv_response(curso_id):
     with transaction.atomic():
         inscripciones = Inscripcion.objects.select_for_update().filter(
             curso=curso,
-            estado_pago__in=['PAGADO', 'BECADO_EXENTO'],
+            estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES,
             estado_moodle='NO_MATRICULADO'
         )
         
