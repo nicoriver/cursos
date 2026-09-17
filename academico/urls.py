@@ -7,6 +7,7 @@ urlpatterns = [
     path('inscripciones/', views.lista_inscripciones, name='lista_inscripciones'),
     path('marcar-pago/<int:inscripcion_id>/', views.marcar_pago, name='marcar_pago'),
     path('descargar-moodle/<int:curso_id>/', views.descargar_csv_moodle, name='descargar_csv_moodle'),
+    path('marcar-mail-enviado/<int:inscripcion_id>/', views.marcar_mail_enviado, name='marcar_mail_enviado'),
     path('detalle-inscripcion/<int:inscripcion_id>/', views.detalle_inscripcion, name='detalle_inscripcion'),
     path('guardar-observacion/<int:inscripcion_id>/', views.guardar_observacion, name='guardar_observacion'),
     path('cursante/editar/<int:cursante_id>/', views.editar_cursante, name='editar_cursante'),

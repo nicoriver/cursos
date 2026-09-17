@@ -90,6 +90,7 @@ def lista_inscripciones(request):
         estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES,
         estado_moodle='NO_MATRICULADO'
     ).count()
+    todos_moodle_count = base_counts.filter(estado_moodle='NO_MATRICULADO').count()
 
     context = {
         'cursos': cursos,
@@ -103,6 +104,7 @@ def lista_inscripciones(request):
         'pagados_count': pagados_count,
         'pendientes_count': pendientes_count,
         'listos_moodle_count': listos_moodle_count,
+        'todos_moodle_count': todos_moodle_count,
         'active_tab': 'gestion',
     }
     return render(request, 'academico/gestion_inscripciones.html', context)
@@ -198,11 +200,26 @@ def guardar_observacion(request, inscripcion_id):
 
 @login_required
 def descargar_csv_moodle(request, curso_id):
-    response, error = generate_moodle_csv_response(curso_id)
+    incluir_todos = request.GET.get('todos') == '1'
+    response, error = generate_moodle_csv_response(curso_id, incluir_todos=incluir_todos)
     if error:
         messages.error(request, error)
         return redirect('lista_inscripciones')
     return response
+
+
+@login_required
+def marcar_mail_enviado(request, inscripcion_id):
+    if request.method == 'POST':
+        inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
+        inscripcion.estado_moodle = 'MAIL_ENVIADO'
+        inscripcion.save(update_fields=['estado_moodle'])
+        messages.success(request, f'Se marcó el mail de credenciales como enviado para {inscripcion.cursante.apellido}, {inscripcion.cursante.nombre}.')
+    
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('lista_inscripciones')
 
 
 # --- ETAPA 4: Portal del Docente y Cierre de Actas ---
@@ -231,7 +248,7 @@ def acta_calificaciones(request, curso_id):
         messages.error(request, 'No tiene permisos para modificar las actas de este curso.')
         return redirect('portal_docente')
         
-    inscripciones = Inscripcion.objects.filter(curso=curso, estado_moodle='MATRICULADO').select_related('cursante')
+    inscripciones = Inscripcion.objects.filter(curso=curso, estado_moodle__in=['MATRICULADO', 'MAIL_ENVIADO']).select_related('cursante')
 
     if request.method == 'POST':
         try:
@@ -423,7 +440,7 @@ def dashboard_principal(request):
     total_pendientes = Inscripcion.objects.filter(estado_pago='PENDIENTE').count()
     
     # Moodle counts
-    total_matriculados = Inscripcion.objects.filter(estado_moodle='MATRICULADO').count()
+    total_matriculados = Inscripcion.objects.filter(estado_moodle__in=['MATRICULADO', 'MAIL_ENVIADO']).count()
     
     # Academic performance counts
     total_aprobados = Inscripcion.objects.filter(estado_academico='APROBADO').count()
@@ -438,7 +455,7 @@ def dashboard_principal(request):
         total_insc = inscs.count()
         
         pagados = inscs.filter(estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES).count()
-        matriculados = inscs.filter(estado_moodle='MATRICULADO').count()
+        matriculados = inscs.filter(estado_moodle__in=['MATRICULADO', 'MAIL_ENVIADO']).count()
         aprobados = inscs.filter(estado_academico='APROBADO').count()
         desaprobados = inscs.filter(estado_academico='DESAPROBADO').count()
         libres = inscs.filter(estado_academico='LIBRE').count()

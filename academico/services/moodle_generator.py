@@ -6,10 +6,12 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from academico.models import Curso, Inscripcion
 
-def generate_moodle_csv_response(curso_id):
+def generate_moodle_csv_response(curso_id, incluir_todos=False):
     """
     Genera un archivo CSV compatible con Moodle para matricular cursantes.
-    Filtra por curso, estado_pago matriculable y estado_moodle = 'NO_MATRICULADO'.
+    Filtra por curso y estado_moodle = 'NO_MATRICULADO'.
+    Por defecto incluye solo estados de pago matriculables; con incluir_todos=True
+    incluye tambien pendientes, hayan pagado o no.
     Una vez generado, actualiza atomicamente el estado de moodle a 'MATRICULADO'.
     """
     curso = get_object_or_404(Curso, id=curso_id)
@@ -18,12 +20,15 @@ def generate_moodle_csv_response(curso_id):
     with transaction.atomic():
         inscripciones = Inscripcion.objects.select_for_update().filter(
             curso=curso,
-            estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES,
             estado_moodle='NO_MATRICULADO'
         )
+        if not incluir_todos:
+            inscripciones = inscripciones.filter(estado_pago__in=Inscripcion.ESTADOS_PAGO_MATRICULABLES)
         
         if not inscripciones.exists():
-            return None, f"No hay estudiantes con pago verificado listos para matricular en este curso."
+            if incluir_todos:
+                return None, "No hay estudiantes sin matricular en este curso."
+            return None, "No hay estudiantes con pago verificado listos para matricular en este curso."
         
         # Generar CSV en memoria
         output = io.StringIO()
@@ -69,7 +74,8 @@ def generate_moodle_csv_response(curso_id):
         
         fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
         codigo_curso = curso.id_syric or f"id_{curso.id}"
-        filename = f"moodle_cohorte_{codigo_curso}_{fecha_str}.csv"
+        alcance = "todos" if incluir_todos else "cobrados"
+        filename = f"moodle_cohorte_{codigo_curso}_{alcance}_{fecha_str}.csv"
         
         response = HttpResponse(csv_data, content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
