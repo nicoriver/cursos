@@ -51,6 +51,81 @@ def importar_syric(request):
 
 
 @login_required
+def inscripcion_manual(request):
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, 'Acceso restringido únicamente para personal administrativo.')
+        return redirect('dashboard_principal')
+
+    cursos = Curso.objects.filter(activo=True)
+
+    if request.method == 'POST':
+        curso_id = request.POST.get('curso', '').strip()
+        dni = request.POST.get('dni', '').strip()
+        nombre = request.POST.get('nombre', '').strip()
+        apellido = request.POST.get('apellido', '').strip()
+        email = request.POST.get('email', '').strip()
+        telefono = request.POST.get('telefono', '').strip()
+        estado_pago = request.POST.get('estado_pago', 'PENDIENTE')
+        estado_moodle = request.POST.get('estado_moodle', 'NO_MATRICULADO')
+        observaciones = request.POST.get('observaciones', '').strip()
+
+        if not curso_id or not dni or not nombre or not apellido:
+            messages.error(request, 'Debe completar curso, DNI, apellido y nombre.')
+        else:
+            curso = get_object_or_404(Curso, id=curso_id, activo=True)
+            try:
+                with transaction.atomic():
+                    cursante, cursante_created = Cursante.objects.get_or_create(
+                        dni=dni,
+                        defaults={
+                            'nombre': nombre,
+                            'apellido': apellido,
+                            'email': email or None,
+                            'telefono': telefono or None,
+                        }
+                    )
+
+                    if not cursante_created:
+                        cursante.nombre = nombre
+                        cursante.apellido = apellido
+                        if email:
+                            cursante.email = email
+                        if telefono:
+                            cursante.telefono = telefono
+                        cursante.save()
+
+                    fecha_pago = timezone.now().date() if estado_pago in Inscripcion.ESTADOS_PAGO_MATRICULABLES else None
+                    inscripcion, inscripcion_created = Inscripcion.objects.get_or_create(
+                        cursante=cursante,
+                        curso=curso,
+                        defaults={
+                            'estado_pago': estado_pago,
+                            'fecha_pago': fecha_pago,
+                            'estado_moodle': estado_moodle,
+                            'fecha_inscripcion': timezone.now().date(),
+                            'observaciones': observaciones,
+                        }
+                    )
+
+                    if not inscripcion_created:
+                        messages.warning(request, f'{apellido}, {nombre} ya tenía una inscripción en este curso. No se duplicó el registro.')
+                    else:
+                        messages.success(request, f'Inscripción manual creada para {apellido}, {nombre}.')
+                        return redirect(f"{request.path}?curso={curso.id}")
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error al guardar la inscripción manual: {str(e)}')
+
+    context = {
+        'cursos': cursos,
+        'estado_pago_choices': Inscripcion.ESTADO_PAGO_CHOICES,
+        'estado_moodle_choices': Inscripcion.ESTADO_MOODLE_CHOICES,
+        'selected_curso': request.GET.get('curso', ''),
+        'active_tab': 'manual',
+    }
+    return render(request, 'academico/inscripcion_manual.html', context)
+
+
+@login_required
 def lista_inscripciones(request):
     cursos = Curso.objects.filter(activo=True)
     

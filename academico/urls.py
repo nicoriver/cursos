@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('dashboard/', views.dashboard_principal, name='dashboard_principal'),
     path('importar-syric/', views.importar_syric, name='importar_syric'),
+    path('inscripcion-manual/', views.inscripcion_manual, name='inscripcion_manual'),
     path('inscripciones/', views.lista_inscripciones, name='lista_inscripciones'),
     path('marcar-pago/<int:inscripcion_id>/', views.marcar_pago, name='marcar_pago'),
     path('descargar-moodle/<int:curso_id>/', views.descargar_csv_moodle, name='descargar_csv_moodle'),

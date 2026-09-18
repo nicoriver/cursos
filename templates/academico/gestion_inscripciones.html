@@ -91,6 +91,9 @@
                             <a class="nav-link" href="{% url 'importar_syric' %}">Importar Syric</a>
                         </li>
                         <li class="nav-item ms-lg-2">
+                            <a class="nav-link {% if active_tab == 'manual' %}active{% endif %}" href="{% url 'inscripcion_manual' %}">Inscripción Manual</a>
+                        </li>
+                        <li class="nav-item ms-lg-2">
                             <a class="nav-link {% if active_tab == 'gestion' %}active{% endif %}" href="{% url 'lista_inscripciones' %}">Gestión de Cobranzas / Moodle</a>
                         </li>
                     {% endif %}
